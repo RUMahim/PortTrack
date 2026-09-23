@@ -128,7 +128,10 @@ function App() {
 
             <br /><br />
 
-            <button>Shipment Management</button>
+            <button onClick={() => setPage('shipments')}>
+  Shipment Management
+</button>
+            
 
             <br /><br />
 
@@ -302,11 +305,24 @@ function App() {
               ))
             )}
 
+                        <button onClick={() => setPage('dashboard')}>
+              Back to Dashboard
+            </button>
+          </>
+        )}
+
+        {page === 'shipments' && (
+          <>
+            <h1>Shipment Management</h1>
+
+            <p>Manage import and export shipments.</p>
+
             <button onClick={() => setPage('dashboard')}>
               Back to Dashboard
             </button>
           </>
         )}
+
       </div>
     )
   }
