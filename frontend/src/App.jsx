@@ -324,7 +324,14 @@ function App() {
     />
 
     <br /><br />
+<label>Container ID:</label>
+<br />
 
+<input
+  placeholder="Enter container ID"
+/>
+
+<br /><br />
             <button onClick={() => setPage('dashboard')}>
               Back to Dashboard
             </button>
