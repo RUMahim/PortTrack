@@ -316,6 +316,14 @@ function App() {
             <h1>Shipment Management</h1>
 
             <p>Manage import and export shipments.</p>
+<label>Tracking ID:</label>
+    <br />
+
+    <input
+      placeholder="Enter tracking ID"
+    />
+
+    <br /><br />
 
             <button onClick={() => setPage('dashboard')}>
               Back to Dashboard
