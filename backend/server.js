@@ -19,6 +19,13 @@ app.get('/api/test', (req, res) => {
     message: 'PortTrack API is working!'
   })
 })
+app.get('/api/info', (req, res) => {
+  res.json({
+    project: 'PortTrack',
+    version: '1.0.0',
+  })
+})
+
 app.post('/api/ships', async (req, res) => {
   try {
     const ship = await Ship.create(req.body)
