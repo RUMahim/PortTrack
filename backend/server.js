@@ -5,6 +5,8 @@ const mongoose = require('mongoose')
 require('dotenv').config()
 
 const app = express()
+app.use(express.json())
+const Ship = require('./models/Ships')
 
 const PORT = 5000
 
@@ -16,6 +18,16 @@ app.get('/api/test', (req, res) => {
   res.json({
     message: 'PortTrack API is working!'
   })
+})
+app.post('/api/ships', async (req, res) => {
+  try {
+    const ship = await Ship.create(req.body)
+    res.status(201).json(ship)
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    })
+  }
 })
 
 mongoose
