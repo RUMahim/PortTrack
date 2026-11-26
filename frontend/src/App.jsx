@@ -1,160 +1,42 @@
-import { useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Dashboard from './pages/Dashboard'
 import ShipManagement from './pages/ShipManagement'
 import ShipmentManagement from './pages/ShipmentManagement'
+import ContainerManagement from './pages/ContainerManagement'
+import TrackShipment from './pages/TrackShipment'
+import Notifications from './pages/Notifications'
 
-function App() {
-  const [showLogin, setShowLogin] = useState(false)
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [page, setPage] = useState('dashboard')
-
-  if (loggedIn) {
-    return (
-      <div>
-        {/* Dashboard */}
-        {page === 'dashboard' && (
-          <>
-            <h1>PortTrack Dashboard</h1>
-
-            <p>Welcome to PortTrack!</p>
-
-            <h2>Dashboard</h2>
-
-            <p>Total Ships: Managed in Ship Management</p>
-            <p>Total Shipments: Managed in Shipment Management</p>
-            <p>Total Containers: 0</p>
-            <p>Delivered: 0</p>
-
-            <h2>Menu</h2>
-
-            <button onClick={() => setPage('ships')}>
-              Ship Management
-            </button>
-
-            <br />
-            <br />
-
-            <button onClick={() => setPage('shipments')}>
-              Shipment Management
-            </button>
-
-            <br />
-            <br />
-
-            <button>
-              Container Management
-            </button>
-
-            <br />
-            <br />
-
-            <button>
-              Track Shipment
-            </button>
-
-            <br />
-            <br />
-
-            <button>
-              Notifications
-            </button>
-
-            <br />
-            <br />
-
-            <button
-              onClick={() => {
-                setLoggedIn(false)
-                setPage('dashboard')
-              }}
-            >
-              Logout
-            </button>
-          </>
-        )}
-
-        {/* Ship Management */}
-        {page === 'ships' && (
-          <>
-            <ShipManagement />
-
-            <br />
-
-            <button onClick={() => setPage('dashboard')}>
-              Back to Dashboard
-            </button>
-          </>
-        )}
-
-        {/* Shipment Management */}
-        {page === 'shipments' && (
-          <>
-            <ShipmentManagement />
-
-            <br />
-
-            <button onClick={() => setPage('dashboard')}>
-              Back to Dashboard
-            </button>
-          </>
-        )}
-      </div>
-    )
-  }
-
-  // Login / Welcome
+export default function App() {
   return (
-    <div>
-      {!showLogin ? (
-        <>
-          <h1>PortTrack</h1>
-
-          <p>Container Cargo Tracking System</p>
-
-          <h2>Welcome to PortTrack</h2>
-
-          <button onClick={() => setShowLogin(true)}>
-            Login
-          </button>
-        </>
-      ) : (
-        <>
-          <h1>PortTrack Login</h1>
-
-          <label>Email:</label>
-          <br />
-
-          <input
-            type="email"
-            placeholder="Enter your email"
-          />
-
-          <br />
-          <br />
-
-          <label>Password:</label>
-          <br />
-
-          <input
-            type="password"
-            placeholder="Enter your password"
-          />
-
-          <br />
-          <br />
-
-          <button onClick={() => setLoggedIn(true)}>
-            Login
-          </button>
-
-          {' '}
-
-          <button onClick={() => setShowLogin(false)}>
-            Back
-          </button>
-        </>
-      )}
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          {/* Public tracking page - works without login */}
+          <Route path="/track-public" element={<TrackShipment publicMode />} />
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/ships" element={<ShipManagement />} />
+            <Route path="/shipments" element={<ShipmentManagement />} />
+            <Route path="/containers" element={<ContainerManagement />} />
+            <Route path="/track" element={<TrackShipment />} />
+            <Route path="/notifications" element={<Notifications />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
-
-export default App
