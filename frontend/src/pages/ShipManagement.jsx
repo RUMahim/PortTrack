@@ -1,294 +1,112 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import api, { apiError } from '../api'
+import { useAuth } from '../context/AuthContext'
 
-function ShipManagement() {
-  // =========================
-  // States
-  // =========================
+const EMPTY = { name: '', imo: '', company: '', arrivalDate: '', departureDate: '', dockNumber: '', status: 'Expected' }
+const toDateInput = (value) => (value ? new Date(value).toISOString().slice(0, 10) : '')
 
-  const [shipName, setShipName] = useState('')
-  const [imoNumber, setImoNumber] = useState('')
-  const [company, setCompany] = useState('')
-  const [arrivalDate, setArrivalDate] = useState('')
-  const [departureDate, setDepartureDate] = useState('')
-  const [dockNumber, setDockNumber] = useState('')
-  const [status, setStatus] = useState('Expected')
-
+export default function ShipManagement() {
+  const { isAdmin } = useAuth()
   const [ships, setShips] = useState([])
-  const [editIndex, setEditIndex] = useState(null)
+  const [form, setForm] = useState(EMPTY)
+  const [editId, setEditId] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  // =========================
-  // Add Ship
-  // =========================
-
-  const addShip = () => {
-    if (
-      shipName === '' ||
-      imoNumber === '' ||
-      company === '' ||
-      arrivalDate === '' ||
-      departureDate === '' ||
-      dockNumber === ''
-    ) {
-      alert('Please fill all fields')
-      return
+  const load = useCallback(async () => {
+    try {
+      const { data } = await api.get('/ships')
+      setShips(data)
+    } catch (err) {
+      setError(apiError(err))
+    } finally {
+      setLoading(false)
     }
+  }, [])
 
-    const newShip = {
-      name: shipName,
-      imo: imoNumber,
-      company: company,
-      arrivalDate: arrivalDate,
-      departureDate: departureDate,
-      dockNumber: dockNumber,
-      status: status,
+  useEffect(() => { load() }, [load])
+
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      if (editId) await api.put(`/ships/${editId}`, form)
+      else await api.post('/ships', form)
+      setForm(EMPTY)
+      setEditId(null)
+      load()
+    } catch (err) {
+      setError(apiError(err))
     }
-
-    setShips([...ships, newShip])
-
-    clearForm()
   }
 
-  // =========================
-  // Delete Ship
-  // =========================
-
-  const deleteShip = (index) => {
-    const updatedShips = ships.filter((_, i) => i !== index)
-
-    setShips(updatedShips)
+  const edit = (ship) => {
+    setForm({
+      name: ship.name, imo: ship.imo, company: ship.company,
+      arrivalDate: toDateInput(ship.arrivalDate), departureDate: toDateInput(ship.departureDate),
+      dockNumber: ship.dockNumber, status: ship.status,
+    })
+    setEditId(ship._id)
   }
 
-  // =========================
-  // Edit Ship
-  // =========================
-
-  const editShip = (index) => {
-    const ship = ships[index]
-
-    setShipName(ship.name)
-    setImoNumber(ship.imo)
-    setCompany(ship.company)
-    setArrivalDate(ship.arrivalDate)
-    setDepartureDate(ship.departureDate)
-    setDockNumber(ship.dockNumber)
-    setStatus(ship.status)
-
-    setEditIndex(index)
-  }
-
-  // =========================
-  // Update Ship
-  // =========================
-
-  const updateShip = () => {
-    if (
-      shipName === '' ||
-      imoNumber === '' ||
-      company === '' ||
-      arrivalDate === '' ||
-      departureDate === '' ||
-      dockNumber === ''
-    ) {
-      alert('Please fill all fields')
-      return
+  const remove = async (id) => {
+    if (!window.confirm('Delete this ship?')) return
+    try {
+      await api.delete(`/ships/${id}`)
+      load()
+    } catch (err) {
+      setError(apiError(err))
     }
-
-    const updatedShips = [...ships]
-
-    updatedShips[editIndex] = {
-      name: shipName,
-      imo: imoNumber,
-      company: company,
-      arrivalDate: arrivalDate,
-      departureDate: departureDate,
-      dockNumber: dockNumber,
-      status: status,
-    }
-
-    setShips(updatedShips)
-
-    clearForm()
   }
-
-  // =========================
-  // Clear Form
-  // =========================
-
-  const clearForm = () => {
-    setShipName('')
-    setImoNumber('')
-    setCompany('')
-    setArrivalDate('')
-    setDepartureDate('')
-    setDockNumber('')
-    setStatus('Expected')
-    setEditIndex(null)
-  }
-
-  // =========================
-  // UI
-  // =========================
 
   return (
     <div>
       <h1>Ship Management</h1>
+      <p className="muted">Record ship arrivals, departures and dock information.</p>
+      {error && <p className="error">{error}</p>}
 
-      <p>
-        Manage ships arriving and departing from the port.
-      </p>
-
-      <h2>
-        {editIndex === null ? 'Add Ship' : 'Edit Ship'}
-      </h2>
-
-      <label>Ship Name:</label>
-      <br />
-
-      <input
-        value={shipName}
-        onChange={(e) => setShipName(e.target.value)}
-        placeholder="Enter ship name"
-      />
-
-      <br />
-      <br />
-
-      <label>IMO Number:</label>
-      <br />
-
-      <input
-        value={imoNumber}
-        onChange={(e) => setImoNumber(e.target.value)}
-        placeholder="Enter IMO number"
-      />
-
-      <br />
-      <br />
-
-      <label>Shipping Company:</label>
-      <br />
-
-      <input
-        value={company}
-        onChange={(e) => setCompany(e.target.value)}
-        placeholder="Enter company name"
-      />
-
-      <br />
-      <br />
-
-      <label>Arrival Date:</label>
-      <br />
-
-      <input
-        type="date"
-        value={arrivalDate}
-        onChange={(e) => setArrivalDate(e.target.value)}
-      />
-
-      <br />
-      <br />
-
-      <label>Departure Date:</label>
-      <br />
-
-      <input
-        type="date"
-        value={departureDate}
-        onChange={(e) => setDepartureDate(e.target.value)}
-      />
-
-      <br />
-      <br />
-
-      <label>Dock Number:</label>
-      <br />
-
-      <input
-        value={dockNumber}
-        onChange={(e) => setDockNumber(e.target.value)}
-        placeholder="Enter dock number"
-      />
-
-      <br />
-      <br />
-
-      <label>Status:</label>
-      <br />
-
-      <select
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
-      >
-        <option value="Expected">Expected</option>
-        <option value="Arrived">Arrived</option>
-        <option value="Departed">Departed</option>
-      </select>
-
-      <br />
-      <br />
-
-      {editIndex === null ? (
-        <button onClick={addShip}>
-          Add Ship
-        </button>
-      ) : (
-        <button onClick={updateShip}>
-          Update Ship
-        </button>
-      )}
-
-      <h2>Ship List</h2>
-
-      {ships.length === 0 ? (
-        <p>No ships added yet.</p>
-      ) : (
-        ships.map((ship, index) => (
-          <div key={index}>
-            <p>
-              <strong>Ship Name:</strong> {ship.name}
-            </p>
-
-            <p>
-              <strong>IMO Number:</strong> {ship.imo}
-            </p>
-
-            <p>
-              <strong>Company:</strong> {ship.company}
-            </p>
-
-            <p>
-              <strong>Arrival Date:</strong> {ship.arrivalDate}
-            </p>
-
-            <p>
-              <strong>Departure Date:</strong> {ship.departureDate}
-            </p>
-
-            <p>
-              <strong>Dock Number:</strong> {ship.dockNumber}
-            </p>
-
-            <p>
-              <strong>Status:</strong> {ship.status}
-            </p>
-
-            <button onClick={() => editShip(index)}>
-              Edit
-            </button>
-
-            {' '}
-
-            <button onClick={() => deleteShip(index)}>
-              Delete
-            </button>
-
-            <hr />
+      {isAdmin && (
+        <form onSubmit={submit} className="card form grid-form">
+          <h2>{editId ? 'Edit ship' : 'Add ship'}</h2>
+          <label>Ship name<input value={form.name} onChange={set('name')} required /></label>
+          <label>IMO number<input value={form.imo} onChange={set('imo')} required /></label>
+          <label>Company<input value={form.company} onChange={set('company')} required /></label>
+          <label>Arrival date<input type="date" value={form.arrivalDate} onChange={set('arrivalDate')} required /></label>
+          <label>Departure date<input type="date" value={form.departureDate} onChange={set('departureDate')} required /></label>
+          <label>Dock number<input value={form.dockNumber} onChange={set('dockNumber')} required /></label>
+          <label>Status
+            <select value={form.status} onChange={set('status')}>
+              <option>Expected</option><option>Arrived</option><option>Departed</option>
+            </select>
+          </label>
+          <div className="row">
+            <button className="btn primary">{editId ? 'Update ship' : 'Add ship'}</button>
+            {editId && <button type="button" className="btn ghost" onClick={() => { setForm(EMPTY); setEditId(null) }}>Cancel</button>}
           </div>
-        ))
+        </form>
       )}
+
+      <div className="card">
+        <h2>Ships</h2>
+        {loading && <p>Loading…</p>}
+        {!loading && ships.length === 0 && <p className="muted">No ships added yet.</p>}
+        {ships.map((ship) => (
+          <div key={ship._id} className="list-row">
+            <div>
+              <strong>{ship.name}</strong>
+              <small>{ship.imo} · {ship.company} · {ship.dockNumber}</small>
+              <small>Arrival {toDateInput(ship.arrivalDate)} · Departure {toDateInput(ship.departureDate)}</small>
+            </div>
+            <div className="row">
+              <span className={`pill ${ship.status.toLowerCase()}`}>{ship.status}</span>
+              {isAdmin && <button className="btn small" onClick={() => edit(ship)}>Edit</button>}
+              {isAdmin && <button className="btn small danger" onClick={() => remove(ship._id)}>Delete</button>}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
-
-export default ShipManagement
